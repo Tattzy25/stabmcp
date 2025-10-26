@@ -1,0 +1,15 @@
+{
+  "image_filename": "image-1761506236982.png",
+  "metadata_filename": "image-1761506236982.json",
+  "generation_timestamp": "2025-10-26T19:17:22.918Z",
+  "prompt": "A stunning 16:9 landscape of a futuristic city at sunset, neon lights reflecting on wet streets, cyberpunk architecture, highly detailed cinematic shot",
+  "negative_prompt": "blurry, low quality, distorted, ugly, text, watermark",
+  "aspect_ratio": "16:9",
+  "seed": 362860,
+  "model": "sd3.5-medium",
+  "mode": "text-to-image",
+  "steps": 30,
+  "cfg_scale": 7,
+  "mime_type": "image/png",
+  "file_size": 3253056
+}

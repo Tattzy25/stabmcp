@@ -1,12 +1,8 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { getCurrentApiKey, executeWithApiFallback } from '../utilities';
 
-// Configuration from environment variables - REQUIRED
-const STABILITY_API_KEY = process.env.STABILITY_API_KEY;
-if (!STABILITY_API_KEY) {
-  throw new Error('STABILITY_API_KEY environment variable is required');
-}
-
+// Configuration from environment variables
 const STABILITY_ENGINE = process.env.STABILITY_ENGINE;
 const STABILITY_WIDTH = process.env.STABILITY_WIDTH ? parseInt(process.env.STABILITY_WIDTH) : undefined;
 const STABILITY_HEIGHT = process.env.STABILITY_HEIGHT ? parseInt(process.env.STABILITY_HEIGHT) : undefined;
@@ -69,17 +65,19 @@ export async function generateImage(params: {
     if (params.model) formData.append('model', params.model);
     if (params.mode) formData.append('mode', params.mode);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/core',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/generate/core',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     // For core generation, we get a single image back
     const imageBuffer = Buffer.from(response.data);
@@ -148,17 +146,19 @@ export async function generateImageSD35(params: {
     formData.append('model', params.model || STABILITY_SD35_MODEL); // SD3.5 model
     if (params.mode) formData.append('mode', params.mode);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/sd3',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/generate/sd3',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     const imageBuffer = Buffer.from(response.data);
     

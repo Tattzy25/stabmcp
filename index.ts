@@ -32,11 +32,24 @@ import {
   inpaint
 } from './src/tools/stability/index';
 
-// Environment configuration
+// Import API key utilities
+import { API_KEYS, currentApiKeyIndex, getCurrentApiKey } from './src/tools/utilities';
+
+// Environment configuration with fallback API keys
+const STABILITY_API_KEY = process.env.STABILITY_API_KEY!;
+const STABILITY_API_KEY_ALT = process.env.STABILITY_API_KEY_ALT;
+
+// Function to get API key with fallback logic
+function getStabilityApiKey(primaryKey: string, fallbackKey?: string): string {
+  // For now, we'll use the primary key
+  // Fallback logic can be implemented here if needed
+  return primaryKey;
+}
+
 const PORT = parseInt(process.env.PORT || '8080');
 const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const SERVER_NAME = process.env.MCP_SERVER_NAME || 'TaaTTTy';
+const SERVER_NAME = process.env.MCP_SERVER_NAME || 'StabilityAI-MCP-Server';
 const SERVER_VERSION = process.env.MCP_SERVER_VERSION || '1.0.0';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const HEALTH_CHECK_PATH = process.env.HEALTH_CHECK_PATH || '/health';
@@ -50,141 +63,6 @@ const validatedVersion = SERVER_VERSION.match(/^\d+\.\d+\.\d+$/)
 const server = new FastMCP({
   name: SERVER_NAME,
   version: validatedVersion as `${number}.${number}.${number}`,
-});
-
-server.addTool({
-  name: "add",
-  description: "Add two numbers",
-  parameters: z.object({
-    a: z.number(),
-    b: z.number(),
-  }),
-  execute: async (args) => {
-    return String(args.a + args.b);
-  },
-});
-
-server.addTool({
-  name: "fetch-zod",
-  description: "Fetch the content of a url (using Zod)",
-  parameters: z.object({
-    url: z.string(),
-  }),
-  execute: async (args, { log, reportProgress }) => {
-    log.info("Fetching webpage content...", { url: args.url });
-    
-    reportProgress({ progress: 0, total: 100 });
-    
-    if (args.url.startsWith("https://example.com")) {
-      throw new UserError("Example.com URLs are not allowed");
-    }
-    
-    reportProgress({ progress: 50, total: 100 });
-    
-    const content = await fetchWebpageContent(args.url);
-    
-    reportProgress({ progress: 100, total: 100 });
-    log.info("Successfully fetched webpage content", { url: args.url, contentLength: content.length });
-    
-    return content;
-  },
-});
-
-server.addTool({
-  name: "download-simple",
-  description: "Download a file and return simple string",
-  parameters: z.object({
-    url: z.string(),
-  }),
-  execute: async (args, { log }) => {
-    log.info("Processing simple download...", { url: args.url });
-    
-    if (args.url.startsWith("https://example.com")) {
-      throw new UserError("Example.com URLs are not allowed for simple downloads");
-    }
-    
-    log.info("Completed simple download");
-    return "Hello, world!";
-  },
-});
-
-server.addTool({
-  name: "download-multiple",
-  description: "Download a file and return multiple messages",
-  parameters: z.object({
-    url: z.string(),
-  }),
-  execute: async (args, { log }) => {
-    log.info("Processing multiple message download...", { url: args.url });
-    
-    if (args.url.startsWith("https://example.com")) {
-      throw new UserError("Example.com URLs are not allowed for multiple downloads");
-    }
-    
-    log.info("Completed multiple message download");
-    return {
-      content: [
-        { type: "text", text: "First message" },
-        { type: "text", text: "Second message" },
-      ],
-    };
-  },
-});
-
-server.addTool({
-  name: "download-image",
-  description: "Download an image file",
-  parameters: z.object({
-    url: z.string(),
-  }),
-  execute: async (args, { log, reportProgress }) => {
-    log.info("Downloading image...", { url: args.url });
-    
-    reportProgress({ progress: 0, total: 100 });
-    
-    if (args.url.startsWith("https://example.com")) {
-      throw new UserError("Example.com URLs are not allowed for images");
-    }
-    
-    reportProgress({ progress: 50, total: 100 });
-    
-    const result = imageContent({
-      url: args.url,
-    });
-    
-    reportProgress({ progress: 100, total: 100 });
-    log.info("Successfully downloaded image", { url: args.url });
-    
-    return result;
-  },
-});
-
-server.addTool({
-  name: "download-audio",
-  description: "Download an audio file",
-  parameters: z.object({
-    url: z.string(),
-  }),
-  execute: async (args, { log, reportProgress }) => {
-    log.info("Downloading audio...", { url: args.url });
-    
-    reportProgress({ progress: 0, total: 100 });
-    
-    if (args.url.startsWith("https://example.com")) {
-      throw new UserError("Example.com URLs are not allowed for audio");
-    }
-    
-    reportProgress({ progress: 50, total: 100 });
-    
-    const result = audioContent({
-      url: args.url,
-    });
-    
-    reportProgress({ progress: 100, total: 100 });
-    log.info("Successfully downloaded audio", { url: args.url });
-    
-    return result;
-  },
 });
 
 // Add resource for application logs
@@ -289,23 +167,67 @@ server.addTool({
   },
 });
 
-// Add health check tool
+// Add comprehensive health check tool with API connectivity validation
 server.addTool({
   name: "health-check",
-  description: "Check server health status",
+  description: "Comprehensive server health status check with Stability AI API connectivity validation",
   parameters: z.object({}),
   execute: async (args, { log }) => {
-    log.info("Health check requested");
+    log.info("Comprehensive health check requested");
+    
+    const healthChecks = {
+      server: {
+        status: "healthy",
+        name: SERVER_NAME,
+        version: SERVER_VERSION,
+        environment: NODE_ENV,
+        uptime: process.uptime(),
+      },
+      system: {
+        memory: Math.round(process.memoryUsage().rss / 1024 / 1024) + "MB RSS",
+        platform: process.platform,
+        node_version: process.version,
+      },
+      stability_api: {
+        status: "configured",
+        keys_configured: API_KEYS.length,
+        current_key_index: currentApiKeyIndex,
+        validation: "pending"
+      }
+    };
+    
+    // Validate API connectivity with a simple test
+    try {
+      // Simple API validation - check if we can make a basic request
+      const testResponse = await fetch('https://api.stability.ai/v1/engines/list', {
+        headers: {
+          'Authorization': `Bearer ${getCurrentApiKey()}`,
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (testResponse.ok) {
+        healthChecks.stability_api.status = "connected";
+        healthChecks.stability_api.validation = "success";
+        log.info("Stability AI API connectivity validated successfully");
+      } else {
+        healthChecks.stability_api.status = "error";
+        healthChecks.stability_api.validation = `HTTP ${testResponse.status}: ${testResponse.statusText}`;
+        log.warn("Stability AI API validation failed", { status: testResponse.status });
+      }
+    } catch (error: any) {
+      healthChecks.stability_api.status = "error";
+      healthChecks.stability_api.validation = `Connection failed: ${error.message}`;
+      log.error("Stability AI API connectivity test failed", { error: error.message });
+    }
+    
+    // Determine overall status
+    const overallStatus = healthChecks.stability_api.status === "connected" ? "healthy" : "degraded";
     
     const healthStatus = {
-      status: "healthy",
+      status: overallStatus,
       timestamp: new Date().toISOString(),
-      server: SERVER_NAME,
-      version: SERVER_VERSION,
-      environment: NODE_ENV,
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      cpu: process.cpuUsage(),
+      checks: healthChecks
     };
     
     return JSON.stringify(healthStatus, null, 2);

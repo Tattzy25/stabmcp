@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { executeWithApiFallback } from '../utilities';
 
 // Utility function to convert base64 to buffer
 function base64ToBuffer(base64: string): Buffer {
@@ -28,17 +29,19 @@ export async function replaceBackgroundAndRelight(params: {
     });
     formData.append('background_prompt', params.background_prompt);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/edit/replace-background-relight',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/edit/replace-background-relight',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -69,18 +72,20 @@ export async function searchAndRecolor(
   if (grow_mask) formData.append('grow_mask', grow_mask.toString());
   if (style_preset) formData.append('style_preset', style_preset);
 
-  const response = await axios.post(
-    'https://api.stability.ai/v2beta/stable-image/edit/search-recolor',
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-        Accept: 'image/webp',
-        ...formData.getHeaders(),
-      },
-      responseType: 'arraybuffer',
-    }
-  );
+  const response = await executeWithApiFallback(async (apiKey) => {
+    return await axios.post(
+      'https://api.stability.ai/v2beta/stable-image/edit/search-recolor',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/webp',
+          ...formData.getHeaders(),
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+  });
 
   return Buffer.from(response.data, 'binary').toString('base64');
 }
@@ -100,18 +105,20 @@ export async function erase(
   if (seed) formData.append('seed', seed.toString());
   if (grow_mask) formData.append('grow_mask', grow_mask.toString());
 
-  const response = await axios.post(
-    'https://api.stability.ai/v2beta/stable-image/edit/erase',
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-        Accept: 'image/webp',
-        ...formData.getHeaders(),
-      },
-      responseType: 'arraybuffer',
-    }
-  );
+  const response = await executeWithApiFallback(async (apiKey) => {
+    return await axios.post(
+      'https://api.stability.ai/v2beta/stable-image/edit/erase',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/webp',
+          ...formData.getHeaders(),
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+  });
 
   return Buffer.from(response.data, 'binary').toString('base64');
 }
@@ -133,18 +140,20 @@ export async function inpaint(
   if (mask) formData.append('mask', Buffer.from(mask, 'base64'));
   if (search_prompt) formData.append('search_prompt', search_prompt);
 
-  const response = await axios.post(
-    'https://api.stability.ai/v2alpha/generation/stable-image/inpaint',
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-        Accept: 'image/webp',
-        ...formData.getHeaders(),
-      },
-      responseType: 'arraybuffer',
-    }
-  );
+  const response = await executeWithApiFallback(async (apiKey) => {
+    return await axios.post(
+      'https://api.stability.ai/v2alpha/generation/stable-image/inpaint',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/webp',
+          ...formData.getHeaders(),
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+  });
 
   return Buffer.from(response.data, 'binary').toString('base64');
 }

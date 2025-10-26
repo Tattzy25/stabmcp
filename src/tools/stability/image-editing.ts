@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { executeWithApiFallback } from '../utilities';
 
 // Utility function to convert base64 to buffer
 function base64ToBuffer(base64: string): Buffer {
@@ -26,17 +27,19 @@ export async function removeBackground(params: {
       contentType: 'image/png'
     });
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/edit/remove-background',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/edit/remove-background',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -70,17 +73,19 @@ export async function outpaint(params: {
     if (params.width) formData.append('width', params.width.toString());
     if (params.height) formData.append('height', params.height.toString());
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/edit/outpaint',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/edit/outpaint',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -109,17 +114,19 @@ export async function searchAndReplace(params: {
     formData.append('search_prompt', params.search_prompt);
     formData.append('replace_prompt', params.replace_prompt);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/edit/search-replace',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/edit/search-replace',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))

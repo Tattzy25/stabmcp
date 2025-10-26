@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { executeWithApiFallback } from '../utilities';
 
 // Utility function to convert base64 to buffer
 function base64ToBuffer(base64: string): Buffer {
@@ -26,17 +27,19 @@ export async function upscaleFast(params: {
       contentType: 'image/png'
     });
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/upscale/fast',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/upscale/fast',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -66,17 +69,19 @@ export async function upscaleCreative(params: {
       formData.append('creativity', params.creativity.toString());
     }
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/upscale/creative',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/upscale/creative',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -103,18 +108,20 @@ export async function upscaleConservative(
   if (negative_prompt) formData.append('negative_prompt', negative_prompt);
   if (creativity) formData.append('creativity', creativity.toString());
 
-  const response = await axios.post(
-    'https://api.stability.ai/v2beta/stable-image/upscale/conservative',
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-        Accept: 'image/webp',
-        ...formData.getHeaders(),
-      },
-      responseType: 'arraybuffer',
-    }
-  );
+  const response = await executeWithApiFallback(async (apiKey) => {
+    return await axios.post(
+      'https://api.stability.ai/v2beta/stable-image/upscale/conservative',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/webp',
+          ...formData.getHeaders(),
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+  });
 
   return Buffer.from(response.data, 'binary').toString('base64');
 }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { executeWithApiFallback } from '../utilities';
 
 // Utility function to convert base64 to buffer
 function base64ToBuffer(base64: string): Buffer {
@@ -28,17 +29,19 @@ export async function controlSketch(params: {
     });
     formData.append('prompt', params.prompt);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/control/sketch',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/control/sketch',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -65,17 +68,19 @@ export async function controlStyle(params: {
     });
     formData.append('prompt', params.prompt);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/control/style',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/control/style',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))
@@ -102,17 +107,19 @@ export async function controlStructure(params: {
     });
     formData.append('prompt', params.prompt);
 
-    const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/control/structure',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-          ...formData.getHeaders()
-        },
-        responseType: 'arraybuffer'
-      }
-    );
+    const response = await executeWithApiFallback(async (apiKey) => {
+      return await axios.post(
+        'https://api.stability.ai/v2beta/stable-image/control/structure',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            ...formData.getHeaders()
+          },
+          responseType: 'arraybuffer'
+        }
+      );
+    });
 
     return {
       image: bufferToBase64(Buffer.from(response.data))

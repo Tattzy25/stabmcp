@@ -13,7 +13,7 @@ import { z } from "zod"; // Or any validation library that supports Standard Sch
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Import Stability AI tools
+// Import Stability AI tools from organized structure
 import {
   generateImage,
   generateImageSD35,
@@ -22,12 +22,15 @@ import {
   searchAndReplace,
   upscaleFast,
   upscaleCreative,
+  upscaleConservative,
   controlSketch,
   controlStyle,
   controlStructure,
   replaceBackgroundAndRelight,
-  searchAndRecolor
-} from './src/stability-tools';
+  searchAndRecolor,
+  erase,
+  inpaint
+} from './src/tools/stability';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '8080');
@@ -358,12 +361,20 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await generateImage(args);
+      const result = await generateImage({
+        prompt: args.prompt!,
+        width: args.width,
+        height: args.height,
+        steps: args.steps,
+        cfg_scale: args.cfg_scale,
+        sampler: args.sampler,
+        seed: args.seed,
+        samples: args.samples
+      });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.images[0].base64,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.images[0].base64, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to generate image: ${error.message}`);
@@ -389,13 +400,21 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await generateImageSD35(args);
+      const result = await generateImageSD35({
+        prompt: args.prompt!,
+        width: args.width,
+        height: args.height,
+        steps: args.steps,
+        cfg_scale: args.cfg_scale,
+        sampler: args.sampler,
+        seed: args.seed,
+        samples: args.samples
+      });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.images[0].base64,
-        mimeType: "image/png"
-      });
+          buffer: Buffer.from(result.images[0].base64, 'base64'),
+        });
     } catch (error: any) {
       throw new UserError(`Failed to generate image with SD3.5: ${error.message}`);
     }
@@ -413,12 +432,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await removeBackground(args);
+      const result = await removeBackground({ image: args.image! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to remove background: ${error.message}`);
@@ -441,13 +459,18 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await outpaint(args);
+      const result = await outpaint({
+        image: args.image!,
+        prompt: args.prompt!,
+        direction: args.direction!,
+        width: args.width,
+        height: args.height
+      });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
-      });
+          buffer: Buffer.from(result.image, 'base64'),
+        });
     } catch (error: any) {
       throw new UserError(`Failed to outpaint image: ${error.message}`);
     }
@@ -470,13 +493,16 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await searchAndReplace(args);
+      const result = await searchAndReplace({
+        image: args.image!,
+        search_prompt: args.search_prompt!,
+        replace_prompt: args.replace_prompt!
+      });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
-      });
+          buffer: Buffer.from(result.image, 'base64'),
+        });
     } catch (error: any) {
       throw new UserError(`Failed to search and replace: ${error.message}`);
     }
@@ -494,12 +520,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await upscaleFast(args);
+      const result = await upscaleFast({ image: args.image! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to upscale image (fast): ${error.message}`);
@@ -519,12 +544,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await upscaleCreative(args);
+      const result = await upscaleCreative({ image: args.image!, creativity: args.creativity });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to upscale image (creative): ${error.message}`);
@@ -544,12 +568,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await controlSketch(args);
+      const result = await controlSketch({ image: args.image!, prompt: args.prompt! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to process sketch: ${error.message}`);
@@ -569,12 +592,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await controlStyle(args);
+      const result = await controlStyle({ image: args.image!, prompt: args.prompt! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to apply style: ${error.message}`);
@@ -594,12 +616,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await controlStructure(args);
+      const result = await controlStructure({ image: args.image!, prompt: args.prompt! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to maintain structure: ${error.message}`);
@@ -619,12 +640,11 @@ server.addTool({
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await replaceBackgroundAndRelight(args);
+      const result = await replaceBackgroundAndRelight({ image: args.image!, background_prompt: args.background_prompt! });
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result.image, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to replace background and relight: ${error.message}`);
@@ -637,26 +657,97 @@ server.addTool({
   description: "Search for and recolor objects in an image",
   parameters: z.object({
     image: z.string(), // base64 encoded image
-    search_prompt: z.string(),
-    color: z.string(),
+    prompt: z.string(),
+    select_prompt: z.string(),
   }),
   execute: async (args, { log, reportProgress }) => {
     log.info("Searching and recoloring objects in image", { 
-      search: args.search_prompt, 
-      color: args.color 
+      prompt: args.prompt, 
+      select_prompt: args.select_prompt 
     });
     reportProgress({ progress: 0, total: 100 });
     
     try {
-      const result = await searchAndRecolor(args);
+      const result = await searchAndRecolor(args.image!, args.prompt!, args.select_prompt!);
       reportProgress({ progress: 100, total: 100 });
       
       return imageContent({
-        data: result.image,
-        mimeType: "image/png"
+        buffer: Buffer.from(result, 'base64')
       });
     } catch (error: any) {
       throw new UserError(`Failed to search and recolor: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "upscale-conservative",
+  description: "Upscale image with minimal changes to preserve details",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Upscaling image (conservative - preserve details)");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await upscaleConservative(args.image, "", undefined, undefined, undefined, undefined);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        buffer: Buffer.from(result, 'base64')
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to upscale image (conservative): ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "erase",
+  description: "Remove unwanted objects from an image using masks",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    mask: z.string(), // base64 encoded mask image
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Erasing objects from image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await erase(args.image!, args.mask!);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        buffer: Buffer.from(result, 'base64')
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to erase objects: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "inpaint",
+  description: "Modify images by filling in or replacing specified areas with new content",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    mask: z.string(), // base64 encoded mask image
+    prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Inpainting image areas");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await inpaint(args.image!, args.prompt!, undefined, undefined, args.mask!);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        buffer: Buffer.from(result, 'base64')
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to inpaint: ${error.message}`);
     }
   },
 });

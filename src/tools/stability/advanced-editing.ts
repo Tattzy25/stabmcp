@@ -52,18 +52,22 @@ export async function replaceBackgroundAndRelight(params: {
 export async function searchAndRecolor(
   image: string,
   prompt: string,
-  search_prompt: string,
-  color: string,
+  select_prompt: string,
   output_format?: string,
-  seed?: number
+  seed?: number,
+  negative_prompt?: string,
+  grow_mask?: number,
+  style_preset?: string
 ): Promise<string> {
   const formData = new FormData();
   formData.append('image', Buffer.from(image, 'base64'));
   formData.append('prompt', prompt);
-  formData.append('search_prompt', search_prompt);
-  formData.append('color', color);
+  formData.append('select_prompt', select_prompt);
   if (output_format) formData.append('output_format', output_format);
   if (seed) formData.append('seed', seed.toString());
+  if (negative_prompt) formData.append('negative_prompt', negative_prompt);
+  if (grow_mask) formData.append('grow_mask', grow_mask.toString());
+  if (style_preset) formData.append('style_preset', style_preset);
 
   const response = await axios.post(
     'https://api.stability.ai/v2beta/stable-image/edit/search-recolor',

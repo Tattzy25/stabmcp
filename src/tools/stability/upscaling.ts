@@ -1,6 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { executeWithApiFallback } from '../utilities';
+import { executeWithApiFallback } from '../utilities/index.js';
 
 // Utility function to convert base64 to buffer
 function base64ToBuffer(base64: string): Buffer {

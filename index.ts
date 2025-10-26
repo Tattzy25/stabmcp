@@ -30,10 +30,10 @@ import {
   searchAndRecolor,
   erase,
   inpaint
-} from './src/tools/stability/index';
+} from './src/tools/stability/index.js';
 
 // Import API key utilities
-import { API_KEYS, currentApiKeyIndex, getCurrentApiKey } from './src/tools/utilities';
+import { API_KEYS, currentApiKeyIndex, getCurrentApiKey } from './src/tools/utilities/index.js';
 
 // Environment configuration with fallback API keys
 const STABILITY_API_KEY = process.env.STABILITY_API_KEY!;

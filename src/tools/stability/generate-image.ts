@@ -1,6 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { getCurrentApiKey, executeWithApiFallback } from '../utilities';
+import { getCurrentApiKey, executeWithApiFallback } from '../utilities/index.js';
 
 // Configuration from environment variables
 const STABILITY_ENGINE = process.env.STABILITY_ENGINE;

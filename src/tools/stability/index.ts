@@ -1,6 +1,6 @@
 // Export all Stability AI tools from their respective files
-export * from './generate-image';
-export * from './image-editing';
-export * from './upscaling';
-export * from './control-tools';
-export * from './advanced-editing';
+export * from './generate-image.js';
+export * from './image-editing.js';
+export * from './upscaling.js';
+export * from './control-tools.js';
+export * from './advanced-editing.js';

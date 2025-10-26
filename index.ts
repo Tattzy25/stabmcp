@@ -345,7 +345,7 @@ server.addTool({
 // Stability AI Tools
 server.addTool({
   name: "generate-image",
-  description: "Generate a high quality image of anything based on a provided prompt & other optional parameters",
+  description: "Generate images from text prompts using Stability AI's text-to-image generation API. Supports multiple models, samplers, and configuration options for creative control.",
   parameters: z.object({
     prompt: z.string(),
     width: z.number().optional(),

@@ -1,11 +1,52 @@
+// Load environment variables
+import 'dotenv/config';
+
+// Polyfill for missing File class in Node.js
+if (typeof File === 'undefined') {
+  (globalThis as any).File = class File {
+    constructor(blobParts: any[], fileName: string, options?: any) {}
+  };
+}
+
 import { FastMCP, imageContent, audioContent, UserError } from "fastmcp";
 import { z } from "zod"; // Or any validation library that supports Standard Schema
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Import Stability AI tools
+import {
+  generateImage,
+  generateImageSD35,
+  removeBackground,
+  outpaint,
+  searchAndReplace,
+  upscaleFast,
+  upscaleCreative,
+  controlSketch,
+  controlStyle,
+  controlStructure,
+  replaceBackgroundAndRelight,
+  searchAndRecolor
+} from './src/stability-tools';
+
+// Environment configuration
+const PORT = parseInt(process.env.PORT || '8080');
+const HOST = process.env.HOST || '0.0.0.0';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const SERVER_NAME = process.env.MCP_SERVER_NAME || 'TaaTTTy';
+const SERVER_VERSION = process.env.MCP_SERVER_VERSION || '1.0.0';
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const HEALTH_CHECK_PATH = process.env.HEALTH_CHECK_PATH || '/health';
+const METRICS_PATH = process.env.METRICS_PATH || '/metrics';
+
+// Ensure version format is correct (major.minor.patch)
+const validatedVersion = SERVER_VERSION.match(/^\d+\.\d+\.\d+$/)
+  ? SERVER_VERSION
+  : '1.0.0';
+
 const server = new FastMCP({
-  name: "TaaTTTy",
-  version: "1.0.0",
+  name: SERVER_NAME,
+  version: validatedVersion as `${number}.${number}.${number}`,
 });
 
 server.addTool({
@@ -245,13 +286,397 @@ server.addTool({
   },
 });
 
+// Add health check tool
+server.addTool({
+  name: "health-check",
+  description: "Check server health status",
+  parameters: z.object({}),
+  execute: async (args, { log }) => {
+    log.info("Health check requested");
+    
+    const healthStatus = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      server: SERVER_NAME,
+      version: SERVER_VERSION,
+      environment: NODE_ENV,
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+    };
+    
+    return JSON.stringify(healthStatus, null, 2);
+  },
+});
+
+// Add metrics tool
+server.addTool({
+  name: "server-metrics",
+  description: "Get server performance metrics",
+  parameters: z.object({}),
+  execute: async (args, { log }) => {
+    log.info("Metrics requested");
+    
+    const metrics = {
+      timestamp: new Date().toISOString(),
+      process: {
+        pid: process.pid,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        cpu: process.cpuUsage(),
+        version: process.version,
+        platform: process.platform,
+      },
+      system: {
+        arch: process.arch,
+        cpus: require('os').cpus().length,
+        totalMemory: require('os').totalmem(),
+        freeMemory: require('os').freemem(),
+      },
+    };
+    
+    return JSON.stringify(metrics, null, 2);
+  },
+});
+
+// Stability AI Tools
+server.addTool({
+  name: "generate-image",
+  description: "Generate a high quality image of anything based on a provided prompt & other optional parameters",
+  parameters: z.object({
+    prompt: z.string(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    steps: z.number().optional(),
+    cfg_scale: z.number().optional(),
+    sampler: z.string().optional(),
+    seed: z.number().optional(),
+    samples: z.number().optional(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Generating image with Stability AI", { prompt: args.prompt });
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await generateImage(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.images[0].base64,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to generate image: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "generate-image-sd35",
+  description: "Generate an image using Stable Diffusion 3.5 models with advanced configuration options",
+  parameters: z.object({
+    prompt: z.string(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    steps: z.number().optional(),
+    cfg_scale: z.number().optional(),
+    sampler: z.string().optional(),
+    seed: z.number().optional(),
+    samples: z.number().optional(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Generating image with Stable Diffusion 3.5", { prompt: args.prompt });
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await generateImageSD35(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.images[0].base64,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to generate image with SD3.5: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "remove-background",
+  description: "Remove the background from an image",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Removing background from image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await removeBackground(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to remove background: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "outpaint",
+  description: "Extend an image in any direction while maintaining visual consistency",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    prompt: z.string(),
+    direction: z.enum(['left', 'right', 'top', 'bottom', 'all']),
+    width: z.number().optional(),
+    height: z.number().optional(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Outpainting image", { direction: args.direction });
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await outpaint(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to outpaint image: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "search-and-replace",
+  description: "Replace objects or elements in an image by describing what to replace and what to replace it with",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    search_prompt: z.string(),
+    replace_prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Searching and replacing objects in image", { 
+      search: args.search_prompt, 
+      replace: args.replace_prompt 
+    });
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await searchAndReplace(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to search and replace: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "upscale-fast",
+  description: "Enhance image resolution by 4x",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Upscaling image (fast 4x)");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await upscaleFast(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to upscale image (fast): ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "upscale-creative",
+  description: "Enhance image resolution up to 4K",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    creativity: z.number().min(0).max(1).optional(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Upscaling image (creative up to 4K)");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await upscaleCreative(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to upscale image (creative): ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "control-sketch",
+  description: "Translate hand-drawn sketch to production-grade image",
+  parameters: z.object({
+    image: z.string(), // base64 encoded sketch image
+    prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Processing sketch to production image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await controlSketch(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to process sketch: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "control-style",
+  description: "Generate an image in the style of a reference image",
+  parameters: z.object({
+    image: z.string(), // base64 encoded style reference image
+    prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Applying style to image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await controlStyle(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to apply style: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "control-structure",
+  description: "Generate an image while maintaining the structure of a reference image",
+  parameters: z.object({
+    image: z.string(), // base64 encoded structure reference image
+    prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Maintaining structure while generating image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await controlStructure(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to maintain structure: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "replace-background-and-relight",
+  description: "Replace the background of an image and relight it",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    background_prompt: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Replacing background and relighting image");
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await replaceBackgroundAndRelight(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to replace background and relight: ${error.message}`);
+    }
+  },
+});
+
+server.addTool({
+  name: "search-and-recolor",
+  description: "Search for and recolor objects in an image",
+  parameters: z.object({
+    image: z.string(), // base64 encoded image
+    search_prompt: z.string(),
+    color: z.string(),
+  }),
+  execute: async (args, { log, reportProgress }) => {
+    log.info("Searching and recoloring objects in image", { 
+      search: args.search_prompt, 
+      color: args.color 
+    });
+    reportProgress({ progress: 0, total: 100 });
+    
+    try {
+      const result = await searchAndRecolor(args);
+      reportProgress({ progress: 100, total: 100 });
+      
+      return imageContent({
+        data: result.image,
+        mimeType: "image/png"
+      });
+    } catch (error: any) {
+      throw new UserError(`Failed to search and recolor: ${error.message}`);
+    }
+  },
+});
+
+// Start server with enhanced configuration
 server.start({
   transportType: "httpStream",
   httpStream: {
     endpoint: "/sse",
-    port: 8080,
+    port: PORT,
+    host: HOST,
   },
 });
+
+console.log(`🚀 FastMCP Server ${SERVER_NAME} v${SERVER_VERSION} starting...`);
+console.log(`📍 Environment: ${NODE_ENV}`);
+console.log(`🌐 Server: http://${HOST}:${PORT}/sse`);
+console.log(`❤️  Health: http://${HOST}:${PORT}${HEALTH_CHECK_PATH}`);
+console.log(`📊 Metrics: http://${HOST}:${PORT}${METRICS_PATH}`);
+console.log(`🔧 Log Level: ${LOG_LEVEL}`);
 
 
 async function fetchWebpageContent(url: string): Promise<string> {

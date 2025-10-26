@@ -30,7 +30,7 @@ import {
   searchAndRecolor,
   erase,
   inpaint
-} from './src/tools/stability';
+} from './src/tools/stability/index';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '8080');

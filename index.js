@@ -148,6 +148,38 @@ server.addTool({
         return result;
     },
 });
+// Add resource for application logs
+server.addResource({
+    uri: "file:///logs/app.log",
+    name: "Application Logs",
+    mimeType: "text/plain",
+    async load() {
+        try {
+            const logContent = await fs.promises.readFile('app.log', 'utf8');
+            return {
+                text: logContent,
+            };
+        }
+        catch (error) {
+            throw new fastmcp_1.UserError(`Failed to read log file: ${error.message}`);
+        }
+    },
+});
+// Add prompt for git commit messages
+server.addPrompt({
+    name: "git-commit",
+    description: "Generate a Git commit message",
+    arguments: [
+        {
+            name: "changes",
+            description: "Git diff or description of changes",
+            required: true,
+        },
+    ],
+    load: async (args) => {
+        return `Generate a concise but descriptive commit message for these changes:\n\n${args.changes}`;
+    },
+});
 server.addTool({
     name: "diagnostic-reports",
     description: "Generate and manage Node.js diagnostic reports",

@@ -348,13 +348,18 @@ server.addTool({
   description: "Generate images from text prompts using Stability AI's text-to-image generation API. Supports multiple models, samplers, and configuration options for creative control.",
   parameters: z.object({
     prompt: z.string(),
+    negative_prompt: z.string().optional(),
     width: z.number().optional(),
     height: z.number().optional(),
+    aspect_ratio: z.string().optional(),
     steps: z.number().optional(),
     cfg_scale: z.number().optional(),
     sampler: z.string().optional(),
     seed: z.number().optional(),
     samples: z.number().optional(),
+    output_format: z.enum(['jpeg', 'png']).optional(),
+    model: z.string().optional(),
+    mode: z.enum(['text-to-image', 'image-to-image']).optional(),
   }),
   execute: async (args, { log, reportProgress }) => {
     log.info("Generating image with Stability AI", { prompt: args.prompt });
@@ -363,13 +368,18 @@ server.addTool({
     try {
       const result = await generateImage({
         prompt: args.prompt!,
+        negative_prompt: args.negative_prompt,
         width: args.width,
         height: args.height,
+        aspect_ratio: args.aspect_ratio,
         steps: args.steps,
         cfg_scale: args.cfg_scale,
         sampler: args.sampler,
         seed: args.seed,
-        samples: args.samples
+        samples: args.samples,
+        output_format: args.output_format,
+        model: args.model,
+        mode: args.mode
       });
       reportProgress({ progress: 100, total: 100 });
       
@@ -384,16 +394,21 @@ server.addTool({
 
 server.addTool({
   name: "generate-image-sd35",
-  description: "Generate an image using Stable Diffusion 3.5 models with advanced configuration options",
+  description: "Generate high-quality images using Stable Diffusion 3.5, Stability AI's most advanced text-to-image model with superior prompt adherence and professional-grade outputs.",
   parameters: z.object({
     prompt: z.string(),
+    negative_prompt: z.string().optional(),
     width: z.number().optional(),
     height: z.number().optional(),
+    aspect_ratio: z.string().optional(),
     steps: z.number().optional(),
     cfg_scale: z.number().optional(),
     sampler: z.string().optional(),
     seed: z.number().optional(),
     samples: z.number().optional(),
+    output_format: z.enum(['jpeg', 'png']).optional(),
+    model: z.string().optional(),
+    mode: z.enum(['text-to-image', 'image-to-image']).optional(),
   }),
   execute: async (args, { log, reportProgress }) => {
     log.info("Generating image with Stable Diffusion 3.5", { prompt: args.prompt });
@@ -402,13 +417,18 @@ server.addTool({
     try {
       const result = await generateImageSD35({
         prompt: args.prompt!,
+        negative_prompt: args.negative_prompt,
         width: args.width,
         height: args.height,
+        aspect_ratio: args.aspect_ratio,
         steps: args.steps,
         cfg_scale: args.cfg_scale,
         sampler: args.sampler,
         seed: args.seed,
-        samples: args.samples
+        samples: args.samples,
+        output_format: args.output_format,
+        model: args.model,
+        mode: args.mode
       });
       reportProgress({ progress: 100, total: 100 });
       
@@ -423,7 +443,7 @@ server.addTool({
 
 server.addTool({
   name: "remove-background",
-  description: "Remove the background from an image",
+  description: "Automatically detect and remove backgrounds from images using Stability AI's background removal API. Returns transparent PNG images with foreground subjects isolated.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
   }),
@@ -446,7 +466,7 @@ server.addTool({
 
 server.addTool({
   name: "outpaint",
-  description: "Extend an image in any direction while maintaining visual consistency",
+  description: "Extend image boundaries with AI-generated content using Stability AI's outpainting technology. Expand canvas size while maintaining visual coherence with the original image.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     prompt: z.string(),
@@ -479,7 +499,7 @@ server.addTool({
 
 server.addTool({
   name: "search-and-replace",
-  description: "Replace objects or elements in an image by describing what to replace and what to replace it with",
+  description: "Find and replace specific elements within images using natural language descriptions. Identify target objects and specify replacement content with text prompts.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     search_prompt: z.string(),
@@ -511,7 +531,7 @@ server.addTool({
 
 server.addTool({
   name: "upscale-fast",
-  description: "Enhance image resolution by 4x",
+  description: "Increase image resolution 4x using Stability AI's fast upscaling model. Optimized for speed while maintaining image quality and detail preservation.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
   }),
@@ -534,7 +554,7 @@ server.addTool({
 
 server.addTool({
   name: "upscale-creative",
-  description: "Enhance image resolution up to 4K",
+  description: "Upscale images to 4K resolution with creative enhancement using Stability AI's advanced upscaling. Adds detail and improves image quality beyond simple resolution increase.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     creativity: z.number().min(0).max(1).optional(),
@@ -558,7 +578,7 @@ server.addTool({
 
 server.addTool({
   name: "control-sketch",
-  description: "Translate hand-drawn sketch to production-grade image",
+  description: "Convert hand-drawn sketches into polished, production-ready images using Stability AI's sketch-to-image technology. Maintains the structure and composition of the original sketch while enhancing visual quality.",
   parameters: z.object({
     image: z.string(), // base64 encoded sketch image
     prompt: z.string(),
@@ -582,7 +602,7 @@ server.addTool({
 
 server.addTool({
   name: "control-style",
-  description: "Generate an image in the style of a reference image",
+  description: "Apply artistic styles from reference images to generated content using Stability AI's style transfer technology. Create images that match the visual characteristics of provided style references.",
   parameters: z.object({
     image: z.string(), // base64 encoded style reference image
     prompt: z.string(),
@@ -606,7 +626,7 @@ server.addTool({
 
 server.addTool({
   name: "control-structure",
-  description: "Generate an image while maintaining the structure of a reference image",
+  description: "Generate new images while preserving the structural composition of reference images using Stability AI's structure control technology. Maintain layout, pose, and spatial relationships while changing content.",
   parameters: z.object({
     image: z.string(), // base64 encoded structure reference image
     prompt: z.string(),
@@ -630,7 +650,7 @@ server.addTool({
 
 server.addTool({
   name: "replace-background-and-relight",
-  description: "Replace the background of an image and relight it",
+  description: "Replace image backgrounds with AI-generated environments and apply realistic lighting adjustments using Stability AI's background replacement and relighting technology.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     background_prompt: z.string(),
@@ -654,7 +674,7 @@ server.addTool({
 
 server.addTool({
   name: "search-and-recolor",
-  description: "Search for and recolor objects in an image",
+  description: "Identify specific objects in images and apply color modifications using Stability AI's object detection and recoloring technology. Change colors of targeted elements while preserving image quality.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     prompt: z.string(),
@@ -682,7 +702,7 @@ server.addTool({
 
 server.addTool({
   name: "upscale-conservative",
-  description: "Upscale image with minimal changes to preserve details",
+  description: "Increase image resolution while preserving original details and minimizing artifacts using Stability AI's conservative upscaling model. Ideal for archival and professional photography applications.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
   }),
@@ -705,7 +725,7 @@ server.addTool({
 
 server.addTool({
   name: "erase",
-  description: "Remove unwanted objects from an image using masks",
+  description: "Remove unwanted objects from images using AI-powered object removal technology. Works with manual masks or automatic object detection to cleanly erase elements while preserving background integrity.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     mask: z.string(), // base64 encoded mask image
@@ -729,7 +749,7 @@ server.addTool({
 
 server.addTool({
   name: "inpaint",
-  description: "Modify images by filling in or replacing specified areas with new content",
+  description: "Fill in or replace specified image areas with AI-generated content using Stability AI's inpainting technology. Perfect for removing objects, repairing damage, or creatively modifying image regions.",
   parameters: z.object({
     image: z.string(), // base64 encoded image
     mask: z.string(), // base64 encoded mask image

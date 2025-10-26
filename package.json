@@ -25,6 +25,9 @@
     "typescript": "^5.9.3",
     "zod": "^3.25.76"
   },
+  "resolutions": {
+    "undici": "^5.28.4"
+  },
   "devDependencies": {
     "@snowpack/plugin-dotenv": "^2.2.0",
     "@snowpack/plugin-react-refresh": "^2.5.0",

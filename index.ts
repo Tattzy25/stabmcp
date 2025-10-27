@@ -55,6 +55,8 @@ const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const HEALTH_CHECK_PATH = process.env.HEALTH_CHECK_PATH || '/health';
 const METRICS_PATH = process.env.METRICS_PATH || '/metrics';
 
+
+
 // Ensure version format is correct (major.minor.patch)
 const validatedVersion = SERVER_VERSION.match(/^\d+\.\d+\.\d+$/)
   ? SERVER_VERSION

@@ -13,7 +13,7 @@ RUN apk add --no-cache python3 make g++ libc6-compat
 COPY package.json package-lock.json ./
 
 # Install dependencies with cache mount and debug logging on failure
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
+RUN --mount=type=cache,id=stabmcp-npm-cache,target=/root/.npm \
     npm ci --include=dev || (echo "npm ci failed; dumping logs..." && \
     ls -la /root/.npm/_logs || true && \
     cat /root/.npm/_logs/*-debug-*.log || true && \

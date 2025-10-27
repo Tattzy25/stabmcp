@@ -768,8 +768,9 @@ server.addTool("generate-image-sd35", "Generate high-quality images using Stable
     });
     
     return {
-      contentType: 'image/png',
-      content: result.images[0].base64
+      type: 'image',
+      data: result.images[0].base64,
+      mimeType: 'image/png'
     };
   } catch (error: any) {
     throw new Error(`Failed to generate image with SD3.5: ${error.message}`);
@@ -785,8 +786,9 @@ server.addTool("remove-background", "Automatically detect and remove backgrounds
     const result = await removeBackground({ image: params.image! });
     
     return {
-      contentType: 'image/png',
-      content: result.image
+      type: 'image',
+      data: result.image,
+      mimeType: 'image/png'
     };
   } catch (error: any) {
     throw new Error(`Failed to remove background: ${error.message}`);
@@ -812,8 +814,9 @@ server.addTool("outpaint", "Extend image boundaries with AI-generated content us
     });
     
     return {
-      contentType: 'image/png',
-      content: result.image
+      type: 'image',
+      data: result.image,
+      mimeType: 'image/png'
     };
   } catch (error: any) {
     throw new Error(`Failed to outpaint image: ${error.message}`);
@@ -838,8 +841,9 @@ server.addTool("search-and-replace", "Find and replace specific elements within 
     });
     
     return {
-      contentType: 'image/png',
-      content: result.image
+      type: 'image',
+      data: result.image,
+      mimeType: 'image/png'
     };
   } catch (error: any) {
     throw new Error(`Failed to search and replace: ${error.message}`);

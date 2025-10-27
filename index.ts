@@ -1,6 +1,9 @@
 // Load environment variables
 import 'dotenv/config';
 
+// Log Node.js version for debugging
+console.log('Node.js version:', process.version);
+
 import { FastMCP, imageContent, audioContent, UserError } from "fastmcp";
 import { z } from "zod"; // Or any validation library that supports Standard Schema
 import * as fs from 'fs';

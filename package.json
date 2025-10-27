@@ -1,19 +1,16 @@
 {
   "name": "stabmcp",
   "version": "1.0.0",
-  "description": "",
+  "description": "MCP server for Stability AI image generation",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node --no-warnings dist/index.js",
     "dev": "tsc -p tsconfig.json && node --no-warnings dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "frontend:dev": "cd frontend && snowpack dev",
-    "frontend:build": "cd frontend && snowpack build",
-    "frontend:start": "cd frontend && snowpack dev --port 3000"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["mcp", "stability-ai", "image-generation"],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -29,13 +26,6 @@
     "undici": "^5.28.4"
   },
   "devDependencies": {
-    "@snowpack/plugin-dotenv": "^2.2.0",
-    "@snowpack/plugin-react-refresh": "^2.5.0",
-    "@types/node": "^24.9.1",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "snowpack": "^3.8.8"
+    "@types/node": "^24.9.1"
   }
 }

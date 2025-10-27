@@ -4,7 +4,35 @@ import 'dotenv/config';
 // Polyfill for missing File class in Node.js
 if (typeof File === 'undefined') {
   (globalThis as any).File = class File {
-    constructor(blobParts: any[], fileName: string, options?: any) {}
+    constructor(blobParts: any[], fileName: string, options?: any) {
+      this.name = fileName;
+      this.size = blobParts.reduce((total, part) => total + (part.length || part.size || 0), 0);
+      this.type = options?.type || '';
+      this.lastModified = options?.lastModified || Date.now();
+    }
+    
+    // Required File interface properties
+    name: string;
+    size: number;
+    type: string;
+    lastModified: number;
+    
+    // Required File interface methods
+    slice(start?: number, end?: number, contentType?: string): Blob {
+      return new Blob([]); // Simplified implementation
+    }
+    
+    arrayBuffer(): Promise<ArrayBuffer> {
+      return Promise.resolve(new ArrayBuffer(0));
+    }
+    
+    stream(): ReadableStream<any> {
+      return new ReadableStream();
+    }
+    
+    text(): Promise<string> {
+      return Promise.resolve('');
+    }
   };
 }
 

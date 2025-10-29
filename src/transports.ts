@@ -131,8 +131,10 @@ export class HTTPTransport {
 
 // Factory function to create transports
 export function createTransports() {
-  const httpPort = parseInt(process.env['HTTP_PORT'] || '3000');
-  const ssePort = parseInt(process.env['SSE_PORT'] || '3001');
+  // Use PORT from environment for HTTP (Railway compatibility)
+  const httpPort = parseInt(process.env['PORT'] || '3000');
+  // Use next port for SSE, or default to 3001
+  const ssePort = httpPort === 3000 ? 3001 : httpPort + 1;
   const host = process.env['HOST'] || '0.0.0.0';
   
   const httpTransport = new HTTPTransport(httpPort, host);

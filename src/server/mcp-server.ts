@@ -25,6 +25,6 @@ export function getServerMetadata() {
     name: 'stability-ai-mcp-server',
     version: '1.0.0',
     description: 'MCP server for Stability AI image generation',
-    transports: ['stdio', 'HTTP', 'SSE']
+    transports: ['HTTP', 'SSE']
   };
 }

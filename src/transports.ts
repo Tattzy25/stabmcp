@@ -35,14 +35,8 @@ export class SSETransport {
       console.log('Client connected via SSE');
       
       socket.on('mcp_message', async (data: any) => {
-        try {
-          const response = await this.mcpServer.processRequest(data);
-          socket.emit('mcp_response', response);
-        } catch (error) {
-          socket.emit('mcp_error', { 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          });
-        }
+        const response = await this.mcpServer.processRequest(data);
+        socket.emit('mcp_response', response);
       });
       
       socket.on('disconnect', () => {
@@ -99,15 +93,9 @@ export class HTTPTransport {
     });
     
     this.app.post('/mcp', async (req, res) => {
-      try {
-        const message = req.body;
-        const response = await this.mcpServer.processRequest(message);
-        res.json(response);
-      } catch (error) {
-        res.status(500).json({
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
-      }
+      const message = req.body;
+      const response = await this.mcpServer.processRequest(message);
+      res.json(response);
     });
     
     this.app.get('/', (_, res) => {

@@ -1,32 +1,28 @@
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createTransports } from "../transports";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-// Module-level transport instances for status tracking and cleanup
+// Module-level transport instances
 let httpTransport: any = null;
 let sseTransport: any = null;
 
-/**
- * Initialize ALL transports for the MCP server
- * MCP servers can use both stdio (for MCP hosts) and HTTP (for web clients)
- */
 export async function initializeTransports(server: McpServer) {
-  // Start stdio transport for MCP protocol (primary communication channel)
-  const stdioTransport = new StdioServerTransport();
-  await server.connect(stdioTransport);
-  
-  console.log('Stability AI MCP Server running on stdio transport');
-  console.log('MCP protocol ready for connections via stdin/stdout');
-
-  // Initialize web transports for HTTP services
-  const transports = createTransports(server);
-  httpTransport = transports.httpTransport;
-  sseTransport = transports.sseTransport;
-  
-  console.log('HTTP and SSE transports activated for web clients');
-  
-  return true;
+  try {
+    const transports = createTransports(server);
+    httpTransport = transports.httpTransport;
+    sseTransport = transports.sseTransport;
+    
+    const PORT = process.env['PORT'] ? parseInt(process.env['PORT']) : 3000;
+    console.log(`HTTP Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`MCP endpoint: http://localhost:${PORT}/mcp`);
+    console.log(`SSE endpoint: http://localhost:3001`);
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize transports:', error);
+    throw error; // Fail loud, no silent fallbacks
+  }
 }
 
 /**
@@ -34,9 +30,8 @@ export async function initializeTransports(server: McpServer) {
  */
 export function getTransportStatus() {
   return {
-    stdio: 'active',
     http: httpTransport ? 'active' : 'inactive',
     sse: sseTransport ? 'active' : 'inactive',
-    info: 'MCP protocol active on stdio, HTTP, and SSE transports'
+    info: 'MCP protocol active on HTTP and SSE transports only'
   };
 }

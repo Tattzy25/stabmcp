@@ -8,11 +8,10 @@ export interface ToolDefinition {
   handler: (args: any) => Promise<any>;
 }
 
-// Registry of all available tools
 export const toolRegistry: ToolDefinition[] = [
   {
-    name: 'generate_sd3_image',
-    description: 'Generate images using Stability AI SD3 models',
+    name: 'generate_image',
+    description: 'Generate images using Stability AI models',
     parameters: {
       prompt: {
         type: 'string',
@@ -27,6 +26,16 @@ export const toolRegistry: ToolDefinition[] = [
         description: 'Model to use (sd3, sd3.5, sd3-large, sd3.5-large, sd3.5-large-turbo)',
         enum: ['sd3', 'sd3.5', 'sd3-large', 'sd3.5-large', 'sd3.5-large-turbo'],
         default: 'sd3.5-large-turbo'
+      },
+      width: {
+        type: 'number',
+        description: 'Image width',
+        default: 1024
+      },
+      height: {
+        type: 'number',
+        description: 'Image height',
+        default: 1024
       },
       aspect_ratio: {
         type: 'string',
@@ -76,17 +85,10 @@ export const toolRegistry: ToolDefinition[] = [
           }]
         };
       } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-          }],
-          isError: true
-        };
+        throw new Error(`Image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   }
-  // Add more tools here as needed
 ];
 
 // Register all tools with the MCP server

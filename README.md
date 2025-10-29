@@ -126,9 +126,7 @@ Most MCP clients support similar configuration. The key elements are:
 
 ### HTTP/SSE Transport Support
 
-This MCP server supports both STDIO and HTTP/SSE transports:
-
-#### STDIO Transport (Default)
+This MCP server supports HTTP/SSE transports only:
 - Used by most desktop clients (Claude Desktop, Cursor)
 - Configured via command execution
 

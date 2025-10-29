@@ -35,7 +35,10 @@ export async function startServer(): Promise<void> {
  */
 export function main(): void {
   if (require.main === module) {
-    startServer().catch(console.error);
+    startServer().catch((error) => {
+      console.error('Fatal server error:', error);
+      process.exit(1);
+    });
   }
 }
 

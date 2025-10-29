@@ -2,6 +2,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import express from 'express';
+import { createServer } from 'http';
 
 // Create MCP server with just the Stability AI tool
 const server = new McpServer({
@@ -87,11 +89,47 @@ server.tool(
   }
 );
 
-// Start the MCP server with stdio transport
+// Start the MCP server with appropriate transport
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.log('Stability AI MCP Server running on stdio');
+  // Use HTTP wrapper for production (Railway deployment)
+  // Use stdio transport for local development
+  if (process.env['NODE_ENV'] === 'production' || process.env['RAILWAY_ENVIRONMENT']) {
+    const port = parseInt(process.env['PORT'] || '3000');
+    
+    // Create HTTP server for Railway health checks
+    const app = express();
+    const httpServer = createServer(app);
+    
+    // Health check endpoint for Railway
+    app.get('/health', (_, res) => {
+      res.status(200).json({ status: 'ok', service: 'stability-ai-mcp-server' });
+    });
+    
+    // Root endpoint
+    app.get('/', (_, res) => {
+      res.status(200).json({
+        message: 'Stability AI MCP Server',
+        status: 'running',
+        transport: 'stdio (wrapped with HTTP for deployment)',
+        health: '/health'
+      });
+    });
+    
+    // Start the MCP server with stdio transport
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    
+    // Start HTTP server
+    httpServer.listen(port, '0.0.0.0', () => {
+      console.log(`Stability AI MCP Server running on HTTP port ${port} with stdio transport`);
+      console.log(`Health check available at: http://0.0.0.0:${port}/health`);
+    });
+    
+  } else {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.log('Stability AI MCP Server running on stdio');
+  }
 }
 
 // Only run if this file is executed directly

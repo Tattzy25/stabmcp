@@ -45,6 +45,5 @@ export function getProcessInfo() {
  * Check if running in production environment
  */
 export function isProduction(): boolean {
-  const isRailway = !!process.env['PORT'] && process.env['PORT'] !== '3000';
-  return process.env['NODE_ENV'] === 'production' || isRailway;
+  return process.env['NODE_ENV'] === 'production' || !!process.env['RAILWAY_ENVIRONMENT'];
 }

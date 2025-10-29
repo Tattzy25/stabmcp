@@ -1,4 +1,4 @@
-# TaTTTy-MCP Server
+# Stability MCP Server
 
 A production-grade Model Context Protocol (MCP) server for Stability AI image generation endpoints. This server provides AI assistants with access to Stability AI's powerful image generation capabilities through a standardized MCP interface.
 

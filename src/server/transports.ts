@@ -11,8 +11,8 @@ export async function initializeTransports(server: McpServer) {
   await server.connect(stdioTransport);
   console.log('Stability AI MCP Server running on stdio');
   
-  // Start HTTP and SSE transports only when explicitly enabled
-  if (process.env['ENABLE_HTTP_TRANSPORT'] === 'true') {
+  // Start HTTP and SSE transports for web connectivity in production
+  if (process.env['NODE_ENV'] === 'production' || process.env['RAILWAY_ENVIRONMENT']) {
     await initializeWebTransports();
   }
 }
@@ -42,7 +42,7 @@ export async function initializeWebTransports() {
 export function getTransportStatus() {
   return {
     stdio: 'active',
-    http: process.env['ENABLE_HTTP_TRANSPORT'] === 'true' ? 'active' : 'disabled',
-    sse: process.env['ENABLE_HTTP_TRANSPORT'] === 'true' ? 'active' : 'disabled'
+    http: process.env['NODE_ENV'] === 'production' || process.env['RAILWAY_ENVIRONMENT'] ? 'active' : 'disabled',
+    sse: process.env['NODE_ENV'] === 'production' || process.env['RAILWAY_ENVIRONMENT'] ? 'active' : 'disabled'
   };
 }

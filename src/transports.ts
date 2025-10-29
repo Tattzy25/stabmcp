@@ -83,11 +83,6 @@ export class HTTPTransport {
   }
   
   private setupRoutes() {
-    // Favicon route
-    this.app.get('/favicon.ico', (_, res) => {
-      res.redirect('https://i.imgur.com/7LSHoSe.png');
-    });
-    
     // Health check endpoint
     this.app.get('/health', (_, res) => {
       res.status(200).json({ status: 'ok', service: 'stability-ai-mcp-server' });

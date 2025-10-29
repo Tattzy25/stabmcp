@@ -352,3 +352,7 @@ For support, please open an issue on GitHub or contact the development team.
 - Stability AI for their powerful image generation API
 - The Model Context Protocol team for the MCP specification
 - The open source community for various dependencies and tools
+
+
+
+thanks dont forget stars

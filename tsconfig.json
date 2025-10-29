@@ -40,6 +40,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "**/*.test.ts"
-  ]
+    "**/*.test.ts",
+    "**/@types/request/**",
+    "**/node_modules/@types/request/**"
+  ],
+  "skipLibCheck": true
 }

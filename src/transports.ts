@@ -13,7 +13,7 @@ export class SSETransport {
   private io: SocketServer;
   private mcpServer: McpServerWithProcessRequest;
   
-  constructor(mcpServer: McpServer, port: number = 3001, host: string = '0.0.0.0') {
+  constructor(mcpServer: McpServer, port: number, host: string) {
     this.mcpServer = mcpServer as McpServerWithProcessRequest;
     this.server = createServer();
     this.io = new SocketServer(this.server, {
@@ -61,7 +61,7 @@ export class HTTPTransport {
   private server: Server;
   private mcpServer: McpServerWithProcessRequest;
   
-  constructor(mcpServer: McpServer, port: number = 3000, host: string = '0.0.0.0') {
+  constructor(mcpServer: McpServer, port: number, host: string) {
     this.mcpServer = mcpServer as McpServerWithProcessRequest;
     this.app = express();
     this.server = createServer(this.app);
@@ -80,17 +80,19 @@ export class HTTPTransport {
   }
   
   private setupRoutes() {
-    this.app.get('/health', (_, res) => {
-      res.status(200).json({ 
-        status: 'ok', 
-        service: 'stability-ai-mcp-server',
-        transports: ['HTTP', 'SSE'],
-        ports: {
-          http: parseInt(process.env['PORT'] || '3000'),
-          sse: parseInt(process.env['PORT'] || '3000') + 1
-        }
-      });
-    });
+    // Enhanced health check endpoint for Railway monitoring
+     this.app.get('/health', (_req, res) => {
+       res.status(200).json({ 
+         status: 'ok', 
+         timestamp: new Date().toISOString(),
+         service: 'stability-ai-mcp-server',
+         version: process.env['npm_package_version'] || '1.0.0',
+         environment: process.env['NODE_ENV'] || 'development',
+         uptime: process.uptime(),
+         memory: process.memoryUsage(),
+         transports: ['http', 'sse']
+       });
+     });
     
     this.app.post('/mcp', async (req, res) => {
       const message = req.body;
@@ -98,19 +100,36 @@ export class HTTPTransport {
       res.json(response);
     });
     
-    this.app.get('/', (_, res) => {
+    // Root endpoint for server information
+     this.app.get('/', (_req, res) => {
       res.json({
-        message: 'Stability AI MCP Server',
-        status: 'running',
-        transports: ['HTTP', 'SSE'],
+        message: 'Stability AI MCP Server - Public Deployment',
+        description: 'Production-ready MCP server for Stability AI image generation',
+        deployment: 'Railway',
+        documentation: 'https://github.com/your-username/stabmcp',
         endpoints: {
-          info: '/ (GET)',
-          health: '/health (GET)',
+          health: '/health',
           mcp: '/mcp (POST)',
-          sse: 'Connect via Socket.io for streaming'
-        }
+          sse: 'WebSocket connection for SSE transport'
+        },
+        tools: ['generate_image', 'text_to_speech'],
+        note: 'Users must provide their own API keys as tool parameters. No server authentication required.'
       });
     });
+    
+    // Enable CORS for public access
+     this.app.use((req, res, next) => {
+       res.header('Access-Control-Allow-Origin', '*');
+       res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+       
+       if (req.method === 'OPTIONS') {
+         res.status(200).end();
+         return;
+       }
+       
+       next();
+     });
   }
   
   async connect() {
@@ -125,11 +144,11 @@ export class HTTPTransport {
 
 // Factory function to create REAL MCP transports
 export function createTransports(mcpServer: McpServer) {
-  // Use PORT from environment for HTTP (Railway compatibility)
-  const httpPort = parseInt(process.env['PORT'] || '3000');
+  // Use PORT from environment for HTTP
+  const httpPort = parseInt(process.env['PORT'] || '');
   // Use next port for SSE
   const ssePort = httpPort + 1;
-  const host = process.env['HOST'] || '0.0.0.0';
+  const host = process.env['HOST'] || '';
   
   const httpTransport = new HTTPTransport(mcpServer, httpPort, host);
   const sseTransport = new SSETransport(mcpServer, ssePort, host);

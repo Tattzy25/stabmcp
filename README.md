@@ -1,15 +1,63 @@
-# Stability MCP Server
+# Stability AI MCP Server
 
-A production-grade Model Context Protocol (MCP) server for Stability AI image generation endpoints. This server provides AI assistants with access to Stability AI's powerful image generation capabilities through a standardized MCP interface.
+A production-ready Model Context Protocol (MCP) server for Stability AI image generation and ElevenLabs text-to-speech capabilities. Deployable on Railway for public use.
+
+## 🚀 Production Deployment on Railway
+
+### Quick Deploy
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template-id?referralCode=your-code)
+
+### Manual Deployment
+
+1. **Fork this repository** to your GitHub account
+
+2. **Connect to Railway**:
+   - Go to [Railway](https://railway.app)
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your forked repository
+   - Railway will automatically deploy
+
+3. **Configure Environment Variables**:
+   In Railway dashboard → Settings → Variables:
+   ```env
+   NODE_ENV=production
+   HOST=0.0.0.0
+   # Users provide their own API keys when calling tools
+   ```
+
+4. **Your server will be live at**: `https://your-project-name.up.railway.app`
+
+### For Users (No Authentication Required)
+
+Users can connect to your public MCP server without any authentication. They only need to provide their own API keys when calling tools:
+
+```json
+{
+  "mcpServers": {
+    "stability-ai-public": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/sdk",
+        "connect",
+        "https://your-project-name.up.railway.app/mcp"
+      ]
+    }
+  }
+}
+```
 
 ## Features
 
-- **SD3 Image Generation**: Generate high-quality images using Stability AI's latest SD3 models
-- **Multiple Model Support**: Support for various SD3 variants including SD3, SD3.5, and SD3.5-Large-Turbo
-- **Flexible Aspect Ratios**: Generate images in various aspect ratios (16:9, 1:1, 21:9, 2:3, 3:2, 4:5, 5:4, 9:16, 9:21)
-- **Multiple Output Formats**: Support for JPEG, PNG, and WebP output formats
-- **Production Ready**: Built with scalability, reliability, and maintainability in mind
-- **Modular Architecture**: Clean separation of concerns with well-organized code structure
+- ✅ **Production Ready**: Optimized for Railway deployment
+- ✅ **Public Access**: No authentication required for server connection
+- ✅ **Multiple Transports**: HTTP and SSE support
+- ✅ **Health Monitoring**: Built-in health checks for Railway
+- ✅ **Auto-scaling**: Handles multiple concurrent users
+- ✅ **Image Generation**: Stability AI integration
+- ✅ **Text-to-Speech**: ElevenLabs integration
+- ✅ **Zero Configuration**: Users provide their own API keys
 
 ## Supported Models
 

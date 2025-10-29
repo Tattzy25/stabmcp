@@ -2,14 +2,14 @@
   "name": "stabmcp",
   "version": "1.0.0",
   "description": "Production-grade MCP server for Stability AI image endpoints",
-  "main": "dist/server.js",
+  "main": "dist/server/main.js",
   "bin": {
-    "stabmcp": "./dist/server.js"
+    "stabmcp": "./dist/server/main.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/server.ts",
-    "start": "node dist/server.js",
+    "start": "node dist/server/main.js",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "lint": "eslint src/**/*.ts",
@@ -31,7 +31,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2",
     "express": "^5.1.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "tough-cookie": "^6.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/caseless": "^0.12.5",

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
 
-// Tool definitions interface
+// Tool definitions interface with proper Zod schemas (following TypeScript SDK patterns)
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -8,51 +9,30 @@ export interface ToolDefinition {
   handler: (args: any) => Promise<any>;
 }
 
+// Zod schemas for input validation (following TypeScript SDK patterns)
+const ImageGenerationSchema = z.object({
+  prompt: z.string().describe('Text prompt for image generation'),
+  api_key: z.string().describe('Stability AI API key (users provide their own)'),
+  model: z.enum(['sd3', 'sd3.5', 'sd3-large', 'sd3.5-large', 'sd3.5-large-turbo'])
+    .describe('Model to use'),
+  width: z.number().describe('Image width'),
+  height: z.number().describe('Image height'),
+  aspect_ratio: z.enum(['16:9', '1:1', '21:9', '2:3', '3:2', '4:5', '5:4', '9:16', '9:21'])
+    .describe('Aspect ratio for the image'),
+  output_format: z.enum(['jpeg', 'png', 'webp']).describe('Output format for the image')
+});
+
+
+
 export const toolRegistry: ToolDefinition[] = [
   {
     name: 'generate_image',
     description: 'Generate images using Stability AI models',
-    parameters: {
-      prompt: {
-        type: 'string',
-        description: 'Text prompt for image generation'
-      },
-      api_key: {
-        type: 'string',
-        description: 'Stability AI API key (users provide their own)'
-      },
-      model: {
-        type: 'string',
-        description: 'Model to use (sd3, sd3.5, sd3-large, sd3.5-large, sd3.5-large-turbo)',
-        enum: ['sd3', 'sd3.5', 'sd3-large', 'sd3.5-large', 'sd3.5-large-turbo'],
-        default: 'sd3.5-large-turbo'
-      },
-      width: {
-        type: 'number',
-        description: 'Image width',
-        default: 1024
-      },
-      height: {
-        type: 'number',
-        description: 'Image height',
-        default: 1024
-      },
-      aspect_ratio: {
-        type: 'string',
-        description: 'Aspect ratio for the image',
-        enum: ['16:9', '1:1', '21:9', '2:3', '3:2', '4:5', '5:4', '9:16', '9:21'],
-        default: '1:1'
-      },
-      output_format: {
-        type: 'string',
-        description: 'Output format for the image',
-        enum: ['jpeg', 'png', 'webp'],
-        default: 'png'
-      }
-    },
-    handler: async ({ prompt, api_key, model, aspect_ratio, output_format }: any) => {
+    parameters: ImageGenerationSchema,
+    handler: async (args: any) => {
+      const { prompt, api_key, model, aspect_ratio, output_format } = ImageGenerationSchema.parse(args);
+      
       try {
-        // Correct Stability AI API endpoint and format
         const formData = new FormData();
         formData.append('prompt', prompt);
         formData.append('model', model);

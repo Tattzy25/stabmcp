@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { createMcpServer } from './mcp-server.js';
-import { initializeTransports } from './transports.js';
-import { keepProcessAlive, setupGracefulShutdown, isProduction } from './process-manager.js';
+import { createMcpServer } from './mcp-server';
+import { initializeTransports } from './transports';
+import { keepProcessAlive, setupGracefulShutdown, isProduction } from './process-manager';
 
 /**
  * Main server startup function

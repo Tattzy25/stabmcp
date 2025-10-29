@@ -1,13 +1,20 @@
-import express from 'express';
+import express = require('express');
 import { createServer, Server } from 'http';
 import { Server as SocketServer } from 'socket.io';
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-// SSE Transport implementation
+// Extend McpServer interface to include processRequest method
+interface McpServerWithProcessRequest extends McpServer {
+  processRequest(message: any): Promise<any>;
+}
+
 export class SSETransport {
   private server: Server;
   private io: SocketServer;
+  private mcpServer: McpServerWithProcessRequest;
   
-  constructor(port: number = 3001, host: string = '0.0.0.0') {
+  constructor(mcpServer: McpServer, port: number = 3001, host: string = '0.0.0.0') {
+    this.mcpServer = mcpServer as McpServerWithProcessRequest;
     this.server = createServer();
     this.io = new SocketServer(this.server, {
       cors: {
@@ -19,7 +26,7 @@ export class SSETransport {
     this.setupSocketHandlers();
     
     this.server.listen(port, host, () => {
-      console.log(`SSE Transport running on port ${port}`);
+      console.log(`SSE server running on port ${port}`);
     });
   }
   
@@ -27,15 +34,10 @@ export class SSETransport {
     this.io.on('connection', (socket) => {
       console.log('Client connected via SSE');
       
-      // Handle MCP messages
-      socket.on('mcp_message', async (_data: any) => {
+      socket.on('mcp_message', async (data: any) => {
         try {
-          // For SSE transport, we'll just acknowledge the message
-          // Actual MCP processing happens through stdio transport
-          socket.emit('mcp_response', { 
-            status: 'received', 
-            message: 'MCP messages processed through stdio transport' 
-          });
+          const response = await this.mcpServer.processRequest(data);
+          socket.emit('mcp_response', response);
         } catch (error) {
           socket.emit('mcp_error', { 
             error: error instanceof Error ? error.message : 'Unknown error' 
@@ -60,12 +62,13 @@ export class SSETransport {
   }
 }
 
-// HTTP Transport implementation
 export class HTTPTransport {
   private app: express.Application;
   private server: Server;
+  private mcpServer: McpServerWithProcessRequest;
   
-  constructor(port: number = 3000, host: string = '0.0.0.0') {
+  constructor(mcpServer: McpServer, port: number = 3000, host: string = '0.0.0.0') {
+    this.mcpServer = mcpServer as McpServerWithProcessRequest;
     this.app = express();
     this.server = createServer(this.app);
     
@@ -73,7 +76,7 @@ export class HTTPTransport {
     this.setupRoutes();
     
     this.server.listen(port, host, () => {
-      console.log(`HTTP Transport running on port ${port}`);
+      console.log(`HTTP server running on port ${port}`);
     });
   }
   
@@ -83,20 +86,23 @@ export class HTTPTransport {
   }
   
   private setupRoutes() {
-    // Health check endpoint
     this.app.get('/health', (_, res) => {
-      res.status(200).json({ status: 'ok', service: 'stability-ai-mcp-server' });
+      res.status(200).json({ 
+        status: 'ok', 
+        service: 'stability-ai-mcp-server',
+        transports: ['HTTP', 'SSE'],
+        ports: {
+          http: parseInt(process.env['PORT'] || '3000'),
+          sse: parseInt(process.env['PORT'] || '3000') + 1
+        }
+      });
     });
     
-    // MCP endpoint - for HTTP transport, we'll provide info only
-    this.app.post('/mcp', async (_req, res) => {
+    this.app.post('/mcp', async (req, res) => {
       try {
-        res.json({
-          status: 'info',
-          message: 'MCP server running with stdio transport',
-          transport: 'HTTP wrapper for stdio',
-          note: 'Connect via stdio transport for full MCP functionality'
-        });
+        const message = req.body;
+        const response = await this.mcpServer.processRequest(message);
+        res.json(response);
       } catch (error) {
         res.status(500).json({
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -104,16 +110,16 @@ export class HTTPTransport {
       }
     });
     
-    // Root endpoint
     this.app.get('/', (_, res) => {
       res.json({
         message: 'Stability AI MCP Server',
         status: 'running',
-        transports: ['stdio', 'HTTP', 'SSE'],
+        transports: ['HTTP', 'SSE'],
         endpoints: {
           info: '/ (GET)',
-          health: '/health',
-          sse: 'Connect via Socket.io on port 3001'
+          health: '/health (GET)',
+          mcp: '/mcp (POST)',
+          sse: 'Connect via Socket.io for streaming'
         }
       });
     });
@@ -129,16 +135,16 @@ export class HTTPTransport {
   }
 }
 
-// Factory function to create transports
-export function createTransports() {
+// Factory function to create REAL MCP transports
+export function createTransports(mcpServer: McpServer) {
   // Use PORT from environment for HTTP (Railway compatibility)
   const httpPort = parseInt(process.env['PORT'] || '3000');
-  // Use next port for SSE, or default to 3001
-  const ssePort = httpPort === 3000 ? 3001 : httpPort + 1;
+  // Use next port for SSE
+  const ssePort = httpPort + 1;
   const host = process.env['HOST'] || '0.0.0.0';
   
-  const httpTransport = new HTTPTransport(httpPort, host);
-  const sseTransport = new SSETransport(ssePort, host);
+  const httpTransport = new HTTPTransport(mcpServer, httpPort, host);
+  const sseTransport = new SSETransport(mcpServer, ssePort, host);
   
   return { httpTransport, sseTransport };
 }

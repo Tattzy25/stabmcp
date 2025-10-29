@@ -5,11 +5,18 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm ci
 
-# Copy built files
-COPY dist/ ./dist/
+# Copy source files
+COPY src/ ./src/
+COPY tsconfig.json ./
+
+# Build the project
+RUN npm run build
+
+# Remove dev dependencies and install only production
+RUN npm prune --production
 
 # Expose port (Railway uses PORT environment variable)
 EXPOSE 8080

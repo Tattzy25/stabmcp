@@ -83,27 +83,30 @@ export class HTTPTransport {
     // Enhanced health check endpoint for Railway monitoring
      this.app.get('/health', (_req, res) => {
        // INTERNAL MONITORING ONLY - For your eyes only, not for external users
+       // Monitoring headers for Google Sheets integration - EXACTLY as specified
        const currentTime = new Date().toISOString();
        const memoryUsage = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
        const uptime = Math.round(process.uptime());
+       const requestStart = _req.headers['x-request-start'] ? Number(_req.headers['x-request-start']) : Date.now();
+       const responseTime = Date.now() - requestStart;
        
-       res.setHeader('X-Internal-Monitor-Timestamp', currentTime);
-       res.setHeader('X-Internal-Monitor-Status', 'healthy');
-       res.setHeader('X-Internal-Monitor-Memory', memoryUsage + 'MB');
-       res.setHeader('X-Internal-Monitor-Uptime', uptime + 's');
-       res.setHeader('X-Internal-Monitor-Environment', process.env['NODE_ENV'] || 'development');
-       res.setHeader('X-Internal-Monitor-Response-Time', Date.now() - Number(_req.headers['x-request-start'] || Date.now()) + 'ms');
-       res.setHeader('X-Internal-Monitor-Last-Error', 'none');
-       res.setHeader('X-Internal-Monitor-Connections', '0');
-       res.setHeader('X-Internal-Monitor-Server-URL', 'https://function-bun-production-19e1.up.railway.app');
-       res.setHeader('X-Internal-Monitor-Zapier-URL', 'https://mcp.zapier.com/api/mcp/s/ZmM5MWNhYjItN2FmNS00YjRlLWI0ZGMtNDBlZDBiMGZkMTZiOjI3ODBlODkxLTE4NjctNGQxOS04N2MyLTEwOGIzMjVjNDBhMg==/mcp');
+       // LIVE MONITORING DATA - REAL-TIME SERVER METRICS:
+       res.setHeader('X-Monitor-Timestamp', currentTime);
+       res.setHeader('X-Monitor-Status', 'healthy');
+       res.setHeader('X-Monitor-Memory-Usage', memoryUsage + 'MB');
+       res.setHeader('X-Monitor-Uptime', uptime + 's');
+       res.setHeader('X-Monitor-Environment', process.env['NODE_ENV'] || '');
+       res.setHeader('X-Monitor-Response-Time', responseTime + 'ms');
+       res.setHeader('X-Monitor-Last-Error', '');
+       res.setHeader('X-Monitor-Active-Connections', '0');
        
+       // Standard health response for external users
        res.status(200).json({ 
          status: 'ok', 
          timestamp: currentTime,
          service: 'stability-ai-mcp-server',
-         version: process.env['npm_package_version'] || '1.0.0',
-         environment: process.env['NODE_ENV'] || 'development',
+         version: process.env['npm_package_version'],
+         environment: process.env['NODE_ENV'],
          uptime: process.uptime(),
          memory: process.memoryUsage(),
          transports: ['http', 'sse']
@@ -119,17 +122,17 @@ export class HTTPTransport {
     // Root endpoint for server information
      this.app.get('/', (_req, res) => {
       res.json({
-        message: 'Stability AI MCP Server - Public Deployment',
-        description: 'Production-ready MCP server for Stability AI image generation',
-        deployment: 'Railway',
-        documentation: 'https://github.com/your-username/stabmcp',
+        message: 'Production MCP Server - Live Deployment',
+        description: 'Live MCP server for real-time monitoring and integration',
+        deployment: 'Railway - Production',
+        server_url: 'https://function-bun-production-19e1.up.railway.app',
         endpoints: {
           health: '/health',
           mcp: '/mcp (POST)',
           sse: 'WebSocket connection for SSE transport'
         },
         tools: ['generate_image'],
-        note: 'Users must provide their own API keys as tool parameters. No server authentication required.'
+        note: 'Internal monitoring enabled. Users provide their own API keys. No server authentication required.'
       });
     });
     

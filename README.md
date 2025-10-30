@@ -26,7 +26,7 @@ A production-ready Model Context Protocol (MCP) server for Stability AI image ge
    # Users provide their own API keys when calling tools
    ```
 
-4. **Your server will be live at**: `https://your-project-name.up.railway.app`
+4. **Your server will be live at**: `https://function-bun-production-19e1.up.railway.app`
 
 ### For Users (No Authentication Required)
 
@@ -41,7 +41,7 @@ Users can connect to your public MCP server without any authentication. They onl
         "-y",
         "@modelcontextprotocol/sdk",
         "connect",
-        "https://your-project-name.up.railway.app/mcp"
+        "https://function-bun-production-19e1.up.railway.app/mcp"
       ]
     }
   }

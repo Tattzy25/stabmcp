@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { createMcpServer } from './mcp-server.js';
-import { createTransports } from '../transports.js';
+import { createMcpServer } from './mcp-server';
+import { createTransports } from '../transports';
 
 async function main() {
   try {
@@ -23,9 +23,7 @@ async function main() {
     console.log(`❤️  Health Check: http://${host}:${port}/health`);
     console.log("");
     console.log("🛠️  Available Tools:");
-    console.log("- generate_image: Create images with Stability AI");
-    console.log("- text_to_speech: Convert text to speech with ElevenLabs");
-    console.log("");
+    console.log("- generate_image: Create images with Stability AI");    console.log("");
     console.log("💡 Usage: Users provide their own API keys as tool parameters");
     console.log("🔒 Security: No authentication required for server connection");
     console.log("🚂 Deployed on: Railway");

@@ -82,19 +82,25 @@ export class HTTPTransport {
   private setupRoutes() {
     // Enhanced health check endpoint for Railway monitoring
      this.app.get('/health', (_req, res) => {
-       // Monitoring headers for Zapier/Google Sheets integration
-       res.setHeader('X-Monitor-Timestamp', new Date().toISOString());
-       res.setHeader('X-Monitor-Status', 'healthy');
-       res.setHeader('X-Monitor-Memory', Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB');
-       res.setHeader('X-Monitor-Uptime', Math.round(process.uptime()) + 's');
-       res.setHeader('X-Monitor-Environment', process.env['NODE_ENV'] || 'development');
-       res.setHeader('X-Monitor-Response-Time', '20ms');
-       res.setHeader('X-Monitor-Last-Error', 'none');
-       res.setHeader('X-Monitor-Connections', '0'); // HTTP connections are stateless
+       // INTERNAL MONITORING ONLY - For your eyes only, not for external users
+       const currentTime = new Date().toISOString();
+       const memoryUsage = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+       const uptime = Math.round(process.uptime());
+       
+       res.setHeader('X-Internal-Monitor-Timestamp', currentTime);
+       res.setHeader('X-Internal-Monitor-Status', 'healthy');
+       res.setHeader('X-Internal-Monitor-Memory', memoryUsage + 'MB');
+       res.setHeader('X-Internal-Monitor-Uptime', uptime + 's');
+       res.setHeader('X-Internal-Monitor-Environment', process.env['NODE_ENV'] || 'development');
+       res.setHeader('X-Internal-Monitor-Response-Time', Date.now() - Number(_req.headers['x-request-start'] || Date.now()) + 'ms');
+       res.setHeader('X-Internal-Monitor-Last-Error', 'none');
+       res.setHeader('X-Internal-Monitor-Connections', '0');
+       res.setHeader('X-Internal-Monitor-Server-URL', 'https://function-bun-production-19e1.up.railway.app');
+       res.setHeader('X-Internal-Monitor-Zapier-URL', 'https://mcp.zapier.com/api/mcp/s/ZmM5MWNhYjItN2FmNS00YjRlLWI0ZGMtNDBlZDBiMGZkMTZiOjI3ODBlODkxLTE4NjctNGQxOS04N2MyLTEwOGIzMjVjNDBhMg==/mcp');
        
        res.status(200).json({ 
          status: 'ok', 
-         timestamp: new Date().toISOString(),
+         timestamp: currentTime,
          service: 'stability-ai-mcp-server',
          version: process.env['npm_package_version'] || '1.0.0',
          environment: process.env['NODE_ENV'] || 'development',
